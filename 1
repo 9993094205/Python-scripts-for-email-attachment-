@@ -1,0 +1,68 @@
+import imaplib
+import email
+import os
+from email.header import decode_header
+
+# Function to create folder if it doesn't exist
+def create_folder(folder_path):
+    if not os.path.isdir(folder_path):
+        os.makedirs(folder_path)
+
+# Function to clean and create safe filename
+def clean_filename(filename):
+    return "".join(c if c.isalnum() else "_" for c in filename)
+
+# Function to save attachments with new name
+def save_attachments(msg, folder_path, new_name):
+    for part in msg.walk():
+        if part.get_content_maintype() == 'multipart':
+            continue
+        if part.get('Content-Disposition') is None:
+            continue
+        filename = part.get_filename()
+        if filename:
+            # Decode filename if necessary
+            filename = decode_header(filename)[0][0]
+            if isinstance(filename, bytes):
+                filename = filename.decode()
+            filename = clean_filename(filename)
+
+            # Save the file with new name
+            new_filepath = os.path.join(folder_path, new_name + os.path.splitext(filename)[1])
+            with open(new_filepath, 'wb') as f:
+                f.write(part.get_payload(decode=True))
+            print(f"Attachment saved as: {new_filepath}")
+
+# Connect to your email account
+def download_attachments(username, password, folder_path, new_name):
+    # Create folder if it doesn't exist
+    create_folder(folder_path)
+
+    # Connect to the email server
+    mail = imaplib.IMAP4_SSL("imap.gmail.com")
+    mail.login(username, password)
+
+    # Select the mailbox you want to check
+    mail.select("inbox")
+
+    # Search for all emails with attachments
+    status, messages = mail.search(None, '(HASATTACHMENT)')
+
+    # Fetch emails and save attachments
+    for num in messages[0].split():
+        status, msg_data = mail.fetch(num, '(RFC822)')
+        for response_part in msg_data:
+            if isinstance(response_part, tuple):
+                msg = email.message_from_bytes(response_part[1])
+                save_attachments(msg, folder_path, new_name)
+
+    # Logout from the email account
+    mail.logout()
+
+# Example usage
+username = "your_email@gmail.com"
+password = "your_password"
+folder_path = "/path/to/save/attachments"  # Replace with your desired folder
+new_name = "new_attachment_name"           # Provide the new name for the attachment
+
+download_attachments(username, password, folder_path, new_name)
