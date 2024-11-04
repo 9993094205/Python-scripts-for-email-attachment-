@@ -66,3 +66,45 @@ folder_path = "/path/to/save/attachments"  # Replace with your desired folder
 new_name = "new_attachment_name"           # Provide the new name for the attachment
 
 download_attachments(username, password, folder_path, new_name)
+
+new code for testing
+
+import os
+import re
+import win32com.client
+
+def download_attachments(save_folder: str):
+    # Connect to Outlook
+    outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
+    inbox = outlook.GetDefaultFolder(6)  # 6 represents the inbox folder
+
+    # Define regex pattern for subject line (File_DD/MM/YYYY)
+    subject_pattern = r"^File_\d{2}/\d{2}/\d{4}$"
+
+    # Search for today's email
+    messages = inbox.Items
+    message = None
+    for msg in messages:
+        if re.match(subject_pattern, msg.Subject):
+            message = msg
+            break
+
+    # Process attachments if email with the subject is found
+    if message is not None and message.Attachments.Count >= 2:
+        # Ensure save folder exists
+        if not os.path.exists(save_folder):
+            os.makedirs(save_folder)
+
+        # Save and rename attachments
+        attachment_names = ["File 1.pdf", "File 2.pdf"]  # Desired file names
+        for i, attachment in enumerate(message.Attachments[:2]):  # Process the first two attachments
+            file_path = os.path.join(save_folder, attachment_names[i])
+            attachment.SaveAsFile(file_path)
+            print(f"Attachment saved as: {file_path}")
+    else:
+        print("Email with specified subject not found or less than 2 attachments available.")
+
+# Usage
+save_folder = r"C:\XYZ"
+download_attachments(save_folder)
+
