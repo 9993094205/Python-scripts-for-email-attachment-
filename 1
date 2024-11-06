@@ -175,8 +175,53 @@ def save_email(save_folder: str):
         print(f"Expected Subject Pattern: {subject_pattern}")
 
 # Usage
+
+
+
 save_folder = "C:/save files folder"  # Update this path as needed
 save_email(save_folder)
+
+
+
+
+
+
+
+import os
+from datetime import datetime
+
+def rename_files(folder_path: str):
+    # Get today's date formatted as "DD Month" (e.g., "06 November")
+    today_date = datetime.now().strftime("%d %B")
+
+    # Define the dynamic old file names based on today's date
+    old_name_x1 = f"CalendarMeeting {today_date}.xlsx"
+    old_name_x2 = f"CalendarMeeting FICC {today_date}.xlsx"
+
+    # Define the new file names
+    new_name_y1 = "y1.xlsx"
+    new_name_y2 = "y2.xlsx"
+
+    # Map old names to new names
+    rename_map = {old_name_x1: new_name_y1, old_name_x2: new_name_y2}
+
+    # Loop through files in the folder and rename if they exist
+    for old_name, new_name in rename_map.items():
+        old_path = os.path.join(folder_path, old_name)
+        new_path = os.path.join(folder_path, new_name)
+
+        if os.path.exists(old_path):
+            os.rename(old_path, new_path)
+            print(f"Renamed '{old_name}' to '{new_name}'")
+        else:
+            print(f"'{old_name}' not found in folder.")
+
+# Usage
+folder_path = "C:/path/to/your/folder"  # Update this to your folder path
+rename_files(folder_path)
+
+
+
 
 
 
