@@ -108,3 +108,75 @@ def download_attachments(save_folder: str):
 save_folder = r"C:\XYZ"
 download_attachments(save_folder)
 
+
+
+
+
+
+
+
+
+import os
+import re
+import win32com.client
+from datetime import datetime
+
+def save_email(save_folder: str):
+    # Connect to Outlook
+    outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
+    inbox = outlook.GetDefaultFolder(6)  # 6 represents the inbox folder
+
+    # Defining the folder structure
+    subfolder_name = "Ask Compass"
+    sub_subfolder_name = "Forward Meeting Dashboard"
+
+    try:
+        # Access each level of nested folder
+        subfolder = inbox.Folders[subfolder_name]
+        target_folder = subfolder.Folders[sub_subfolder_name]
+        print(f"Successfully accessed folder: {target_folder.Name}")
+    except Exception as e:
+        print(f"Error accessing folders: {e}")
+        return
+
+    # Define regex pattern for subject line (File_DD/MM/YYYY)
+    today_date = datetime.now().strftime("%d %B")  # Format: DD month
+    subject_pattern = rf"CalendarMeeting as of {today_date}"
+    print(f"Expected Subject Pattern: {subject_pattern}")
+
+    # Search for today's email
+    messages = target_folder.Items
+    message = None
+    for msg in messages:
+        print(f"Checking subject: {msg.Subject}")  # Print each subject for debugging
+        if re.match(subject_pattern, msg.Subject):
+            message = msg
+            break
+
+    # Save the email if it is found
+    if message is not None:
+        print(f"Email found with subject: {message.Subject}")
+
+        # Ensure save folder exists
+        if not os.path.exists(save_folder):
+            os.makedirs(save_folder)
+
+        # Construct file path and save as .msg
+        file_path = os.path.join(save_folder, f"{message.Subject}.msg")
+        try:
+            message.SaveAs(file_path)
+            print(f"Email saved as: {file_path}")
+        except Exception as e:
+            print(f"Error saving email: {e}")
+    else:
+        print("Email with specified subject not found or does not meet criteria.")
+        print("Debug Information:")
+        print(f"Target Folder: {target_folder}")
+        print(f"Expected Subject Pattern: {subject_pattern}")
+
+# Usage
+save_folder = "C:/save files folder"  # Update this path as needed
+save_email(save_folder)
+
+
+
