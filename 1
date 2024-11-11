@@ -220,6 +220,27 @@ def rename_files(folder_path: str):
 folder_path = "C:/path/to/your/folder"  # Update this to your folder path
 rename_files(folder_path)
 
+import requests
+
+# URL of the file you want to download
+url = "https://example.com/path/to/file"
+
+# Specify the local path where the file will be saved
+file_path = "downloaded_file.ext"
+
+try:
+    # Send a GET request to the URL
+    response = requests.get(url, stream=True)
+    response.raise_for_status()  # Check if the request was successful
+
+    # Open a file in write-binary mode and save the content in chunks
+    with open(file_path, "wb") as file:
+        for chunk in response.iter_content(chunk_size=8192):
+            file.write(chunk)
+    print(f"File downloaded successfully and saved as {file_path}")
+
+except requests.exceptions.RequestException as e:
+    print("Error downloading the file:", e)
 
 
 
