@@ -317,3 +317,74 @@ download_attachment_from_email()
 
 
 
+import requests
+import json
+
+# Tableau server credentials
+TABLEAU_SERVER_URL = "https://your-tableau-server-url"
+SITE_ID = "your-site-id"  # Default site ID is an empty string: ""
+USERNAME = "your-username"
+PASSWORD = "your-password"
+
+# Dashboard details
+VIEW_CONTENT_URL = "views/workbook_name/dashboard_name"
+
+# Function to sign in to Tableau and get an authentication token
+def tableau_sign_in():
+    url = f"{TABLEAU_SERVER_URL}/api/3.15/auth/signin"
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "credentials": {
+            "name": USERNAME,
+            "password": PASSWORD,
+            "site": {"contentUrl": SITE_ID}
+        }
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code != 200:
+        raise Exception(f"Failed to sign in: {response.text}")
+
+    auth_token = response.json()["credentials"]["token"]
+    site_id = response.json()["credentials"]["site"]["id"]
+    return auth_token, site_id
+
+# Function to download the dashboard as a PDF
+def download_dashboard_pdf(auth_token, site_id, filter_params=None):
+    url = f"{TABLEAU_SERVER_URL}/api/3.15/sites/{site_id}/views/{VIEW_CONTENT_URL}/pdf"
+    headers = {"X-Tableau-Auth": auth_token}
+
+    # Add filter parameters if provided
+    if filter_params:
+        url += "?" + "&".join([f"vf_{k}={v}" for k, v in filter_params.items()])
+
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        raise Exception(f"Failed to download PDF: {response.text}")
+
+    # Save the PDF file
+    with open("dashboard.pdf", "wb") as file:
+        file.write(response.content)
+    print("Dashboard PDF downloaded successfully!")
+
+# Main script
+if __name__ == "__main__":
+    try:
+        # Authenticate and get token
+        token, site_id = tableau_sign_in()
+
+        # Define filters to apply (optional)
+        filters = {
+            "Region": "Asia",
+            "Year": "2024"
+        }
+
+        # Download the filtered dashboard as a PDF
+        download_dashboard_pdf(token, site_id, filter_params=filters)
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+
+
+
