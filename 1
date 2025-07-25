@@ -34,3 +34,55 @@ for approver in approvers:
         dv.add(ws[cell])
 
     wb.save(output_path)
+
+
+
+
+
+
+
+
+import os
+import openpyxl
+from openpyxl.worksheet.datavalidation import DataValidation
+
+# 🔧 CONFIGURE THIS: Set your folder containing the Excel files
+FOLDER_PATH = r'C:\path\to\your\folder'  # <-- Change this to your folder path
+
+# 🔧 CONFIGURE THIS: Set the worksheet name if it's not always 'Sheet1'
+WORKSHEET_NAME = 'Sheet1'                # <-- Change if your sheet has a different name
+
+# Loop through all .xlsx files in the folder
+for file in os.listdir(FOLDER_PATH):
+    if file.endswith('.xlsx'):
+        file_path = os.path.join(FOLDER_PATH, file)
+        wb = openpyxl.load_workbook(file_path)
+        if WORKSHEET_NAME not in wb:
+            print(f'Sheet "{WORKSHEET_NAME}" not found in {file}')
+            continue
+        ws = wb[WORKSHEET_NAME]
+
+        # Find column with header "Approved"
+        approved_col = None
+        for cell in ws[1]:
+            if cell.value == "Approved":
+                approved_col = cell.column_letter
+                break
+        if not approved_col:
+            print(f'"Approved" column not found in {file}')
+            continue
+
+        # Create Yes/No data validation
+        dv = DataValidation(type="list", formula1='"Yes,No"', allow_blank=True)
+        ws.add_data_validation(dv)
+
+        # Apply validation to all rows in the "Approved" column, excluding header
+        max_row = ws.max_row
+        rng = f"{approved_col}2:{approved_col}{max_row}"
+        dv.add(rng)
+
+        # Save file (overwrite)
+        wb.save(file_path)
+        print(f'Validation applied in {file}')
+
+print('Done!')
